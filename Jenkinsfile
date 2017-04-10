@@ -1,26 +1,18 @@
-
-
 node{
   stage ('Build') {
-  	checkout scm
-	 
-	     // git url: 'https://github.com/repo/project'
-	      
-	          withMaven(
-		          maven: 'M3', // Maven installation declared in the Jenkins "Global Tool Configuration"
-			          mavenSettingsConfig: 'my-maven-settings', // Maven settings.xml file defined with the Jenkins Config File Provider Plugin
-				          mavenLocalRepo: '.repository') {
-					   
-					         // Run the maven build
-						       sh "mvn clean install"
-						        
-							    } // withMaven will discover the generated Maven artifacts, JUnit reports and FindBugs reports
-							      }
+	// git url: 'https://github.com/repo/project'
+	checkout scm
+	// install Maven and add it to the path
+	env.PATH = "${tool 'M3'}/bin:${env.PATH}"
 
-							        stage('Package') {
-										sh 'mvn clean package -DskipTests'
-											}
-											}
-
-
+	configFileProvider(
+	[configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
+	  sh 'mvn -s $MAVEN_SETTINGS clean package'
+	}
+	// Run the maven build
+	sh "mvn clean install"
+	// Package
+	sh 'mvn clean package -DskipTests'
+  }
+}
 
